@@ -33,25 +33,34 @@ void ModelManager::listModels() {
     }
 }
 
-void ModelManager::downloadModel(const std::string& repo_id) {
+void ModelManager::downloadModel(const std::string& repo_id, const std::string& quant) {
     std::string model_dir = ConfigManager::getInstance().getModelDirectory();
     
-    // Ensure the model directory exists
     if (!fs::exists(model_dir)) {
         std::cout << "Creating model directory: " << model_dir << "\n";
         fs::create_directories(model_dir);
     }
 
-    std::cout << "Downloading model from " << repo_id << " to " << model_dir << "\n";
+    // Determinar qué cuantización usar (Parámetro o por defecto)
+    std::string chosen_quant = quant.empty() ? "Q4_K_M" : quant;
+
+    std::cout << "=======================================================\n";
+    std::cout << " Iniciando descarga con cliente local 'hf'\n";
+    std::cout << " Repositorio:   " << repo_id << "\n";
+    std::cout << " Cuantización:  " << chosen_quant << "\n";
+    std::cout << " Destino:       " << model_dir << "\n";
+    std::cout << "=======================================================\n";
     
-    // Example command: huggingface-cli download <repo_id> --local-dir <model_dir> --include "*.gguf"
-    std::string command = "hf download " + repo_id + " --local-dir " + model_dir + " --include \"*.gguf\"";
+    // Construcción dinámica del comando hf inyectando la variable chosen_quant
+    std::string command = "hf download " + repo_id + " --include \"*" + chosen_quant + ".gguf\" --local-dir " + model_dir;
+    
+    std::cout << "Ejecutando: " << command << "\n";
     
     int result = std::system(command.c_str());
     if (result == 0) {
-        std::cout << "Download completed successfully.\n";
+        std::cout << "\n🟢 Descarga finalizada exitosamente.\n";
     } else {
-        std::cerr << "Error: Download failed with exit code " << result << "\n";
+        std::cerr << "\n🔴 Error: El comando 'hf' falló con código de salida " << result << "\n";
     }
 }
 
